@@ -1,0 +1,12 @@
+#!/bin/bash
+
+/base/upd_hosts
+/base/vpn_init
+mkdir -p /base/www
+/base/get_pw
+# cron
+cp -f /base/get_pw.cron /etc/cron.d/
+chmod 0644 /etc/cron.d/get_pw.cron
+crontab /etc/cron.d/get_pw.cron
+env > /etc/environment && cron -f
+

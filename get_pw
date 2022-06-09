@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# get_pw
+
+XSRV_FILE='/usr/bin/xvfb-run'
+XSRV_PS=xvfb-run
+OPERA_CMD=$XSRV_FILE' /usr/local/opera-beta/opera-beta --no-sandbox'
+OPERA_PS=opera-beta
+TIMEOUT=30
+NET_ATTEMPTS=3
+INSUR_FREE_MB=100
+PROFILE_DIR=$HOME/.config/opera-beta
+DUMP_PREFIX=/base/dump
+PW_FILE=/base/www/pw.txt
+WPAD_TEMPL=/base/wpad.00
+WPAD_FILE=/base/www/wpad.dat
+
+find_ok_pw() {
+  OK_PW=''
+  for PROXY_NUM in $(seq 0 3) ; do
+    if [ $(curl \
+      -x 'https://0:'$1'@eu'$PROXY_NUM'.sec-tunnel.com:443' \
+      http://ipv4.icanhazip.com
+    ) ] ; then 
+      OK_PW=$1
+      break
+    fi
+  done
+}
+
+OK_PW=''
+for ATTEMPT in $(seq 1 $NET_ATTEMPTS) ; do
+  # for a start check pw from old pw file 
+  if [ -f $PW_FILE ] ; then 
+    if [ $(cat $PW_FILE) ] ; then 
+      find_ok_pw $(cat $PW_FILE)
+    fi
+  fi
+  if [ $OK_PW ] ; then break ; fi
+done
+if [ $OK_PW ] ; then exit ; fi
+
+# if old pw is wrong run new search
+for ATTEMPT in $(seq 1 $NET_ATTEMPTS) ; do
+  $OPERA_CMD &
+  # wait until it compl.starts
+  sleep $TIMEOUT
+  # get pid
+  OPERA_PID=$(ps -aux | grep $OPERA_PS | grep -v $XSRV_PS \
+    | head -n1 | awk {'print $2;'}
+  )
+  # make dump
+  dd if=/dev/zero of=$DUMP_PREFIX.tmp bs=1M count=$INSUR_FREE_MB
+  gcore -o $DUMP_PREFIX $OPERA_PID
+  rm -f $DUMP_PREFIX.tmp
+  killall $OPERA_PS
+  # get pw candidates
+  PWS=$(strings $DUMP_PREFIX.$OPERA_PID \
+    | egrep -o '([0-9A-Za-z_\.\-]){700,}' \
+    | egrep -v '\\n' | egrep '[0-9]' | egrep '\.' \
+    | egrep '[A-Z]' | egrep '[a-z]'
+  )
+  # find ok pw
+  for PW in $(echo $PWS) ; do
+    find_ok_pw $PW 
+    if [ $OK_PW ] ; then break ; fi
+  done
+  rm -f $DUMP_PREFIX.$OPERA_PID 
+  if [ $OK_PW ] ; then break ; fi
+  sleep $TIMEOUT
+done
+# if good pw's not found yet then leave it all
+if [ ! $OK_PW ] ; then exit ; fi
+# upd.pw file
+echo $OK_PW > $PW_FILE
+# upd.wpad file
+WPAD_TEXT=$(sed -r "s/const pw = '[^']+'/const pw = \'"$PW"\'/" $WPAD_TEMPL)
+echo $WPAD_TEXT > $WPAD_FILE
+

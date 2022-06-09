@@ -1,0 +1,2 @@
+*/30 * * * * env - `cat /etc/environment` /base/get_pw >> /dev/null 2>&1
+

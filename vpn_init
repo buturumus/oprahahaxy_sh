@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# vpn_init
+
+XSRV_FILE='/usr/bin/xvfb-run'
+XSRV_PS=xvfb-run
+OPERA_CMD=$XSRV_FILE' /usr/local/opera-beta/opera-beta --no-sandbox'
+OPERA_PS=opera-beta
+TIMEOUT=30
+PROFILE_DIR=$HOME/.config/opera-beta
+
+# create config
+$OPERA_CMD &
+sleep $TIMEOUT
+killall $OPERA_PS
+# turn vpn on
+S_FROM='"freedom":\{[^\}]+\}'
+S_TO='"freedom":\{"proxy_switcher":\{"bytes_transferred":"0","country_code":"EU","enabled":true,"forbidden":false,"ui_visible":true\}'
+sed -r 's/'$S_FROM'/'$S_TO'/' $PROFILE_DIR/Preferences \
+  > /tmp/Preferences
+sleep $TIMEOUT
+cp -f /tmp/Preferences $PROFILE_DIR/
+
