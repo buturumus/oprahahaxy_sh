@@ -1,5 +1,5 @@
 --------------------------------------------------------------
-oprahahaxy
+oprahahaxy (shell implementation)
 --------------------------------------------------------------
 
 This is a (primitive) tool for digging Opera vpn credentials up. They then can be used with any other modern browser, not only Opera itself. The thing was inspired by Oprah-proxy project (https://github.com/spaze/oprah-proxy), which now does not work, so a little reverse engineering took place too.
@@ -9,7 +9,7 @@ Opera in "vpn" mode under the hood uses own Hppts proxy servers. To connect to t
 The project contains a few scripts placed in a Docker container for easy deployment, either on localhost or on a remote server. Credentials are valid for some limited amount of time so main script should periodically check if password's still ok. (By the way currently for Opera proxies only password is important, username can by even empty).
 Init script installs (most conservative version of) Opera in fake X-server environment, and there's Nginx minimal installation which exposes credentials outside.
 
-To use credentials the main script constructs proxy-autoconfiguration file (wpad.dat), which should be pointed by url in browser's settings. Grabbed password is wrote right in the file thouhg for example for Firefox it should also be entered in a prompt form manually so there is also password-only containing file in the same webserver's directory.
+To use credentials the main script constructs proxy-autoconfiguration file (wpad.dat), which should be pointed by url in browser's settings. Grabbed password is written right in the file thouhg for example for Firefox it should also be entered in a prompt form manually so there is also password-only containing file in the same webserver's directory.
 
 So after deployment with current project configuration:
 http://my_cont_address:8001/wpad.dat - proxy autoconfiguration script,
